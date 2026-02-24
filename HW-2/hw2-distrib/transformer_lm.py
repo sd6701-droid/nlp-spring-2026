@@ -140,7 +140,10 @@ class TransformerLM(nn.Module):
         x_idx = x
         if not torch.is_tensor(x_idx):
             x_idx = torch.tensor(x_idx, dtype=torch.long)
+
         x_idx = x_idx.long()
+        x_idx = x_idx.to(next(self.parameters()).device)  # <<< ADD THIS LINE
+
         device = x_idx.device
 
         # pad/truncate to num_positions
