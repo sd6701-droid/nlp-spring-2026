@@ -159,6 +159,7 @@ class TransformerLM(nn.Module):
         src = self.tok_embedding(x_idx) + self.pos_embedding(pos_ids.unsqueeze(0))
 
         causal = self.causal_mask(N, device=device)
+
         tgt = src   # <<< ADD THIS BACK
 
         # make encoder causal too to avoid "future leakage" into memory
@@ -198,7 +199,7 @@ class NeuralLanguageModel(LanguageModel):
 
 
     def get_log_prob_sequence(self, next_chars, context):
-        
+        total = 0.0
         for ch in next_chars:
             lp = self.get_next_char_log_probs(context)
             total += float(lp[self.vocab_index.index_of(ch)])
@@ -234,7 +235,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     model.zero_grad()
     optimizer = optim.Adam(model.parameters(), lr = 1e-4)
 
-    num_epochs = 10
+    num_epochs = 1
     start = time.time()
 
     for epoch in range(0, num_epochs):

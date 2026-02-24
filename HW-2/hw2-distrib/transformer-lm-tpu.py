@@ -188,7 +188,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     loss_function = nn.NLLLoss()
 
-    num_epochs = 10
+    num_epochs = 1
     start = time.time()
 
     for epoch in range(num_epochs):
