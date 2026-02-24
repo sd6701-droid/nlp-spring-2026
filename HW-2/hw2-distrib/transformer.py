@@ -1,6 +1,5 @@
 # transformer.py
 
-import time
 import torch
 import torch.nn as nn
 import numpy as np
@@ -9,7 +8,10 @@ from torch import optim
 import matplotlib.pyplot as plt
 from typing import List
 from utils import *
-
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import time
+import math
 
 # Wraps an example: stores the raw input string (input), the indexed form of the string (input_indexed),
 # a tensorized version of that (input_tensor), the raw outputs (output; a numpy array) and a tensorized version
@@ -39,8 +41,46 @@ class Transformer(nn.Module):
         :param num_layers: number of TransformerLayers to use; can be whatever you want
         """
         super().__init__()
-        print("here", vocab_size, num_positions, d_model, d_internal, num_classes, num_layers)
-        raise Exception("Implement me")
+        self.vocab_size = vocab_size
+        self.num_positions = num_positions
+        self.d_model =d_model
+        self.d_internal = d_internal
+        self.num_classes = num_classes
+        self.num_layers = num_layers
+        # raise Exception("Implement me")
+
+        # Character embedding
+        self.tok_embed = nn.Embedding(vocab_size, d_model)
+
+        # Positional encoding (learned, provided class below)
+        self.pos_enc = PositionalEncoding(d_model=d_model, num_positions=num_positions, batched=False)
+
+        # Stack of TransformerLayers
+        self.layers = nn.ModuleList([
+            TransformerLayer(d_model=d_model, d_internal=d_internal) for _ in range(num_layers)
+        ])
+
+        # Final classifier per position
+        self.classifier = nn.Linear(d_model, num_classes)
+
+        # Attention mode: "bidir" (default), "causal", or "anti_causal"
+        # You can set this in train_classifier based on args.task if needed.
+        self.attn_mode = "bidir"
+
+    def _build_attn_mask(self, N: int, device: torch.device):
+        """
+        Returns a boolean mask of shape (N, N) where True means "blocked".
+        """
+        if self.attn_mode == "causal":
+            # block future (j > i)
+            return torch.triu(torch.ones(N, N, dtype=torch.bool, device=device), diagonal=1)
+        elif self.attn_mode == "anti_causal":
+            # block past (j < i)
+            return torch.tril(torch.ones(N, N, dtype=torch.bool, device=device), diagonal=-1)
+        else:
+            return None
+        
+
 
     def forward(self, indices):
         """
@@ -49,7 +89,47 @@ class Transformer(nn.Module):
         :return: A tuple of the softmax log probabilities (should be a 20x3 matrix) and a list of the attention
         maps you use in your layers (can be variable length, but each should be a 20x20 matrix)
         """
-        raise Exception("Implement me")
+
+        # Accept a LetterCountingExample by mistake and extract tensor
+        if hasattr(indices, "input_tensor"):
+            indices = indices.input_tensor
+
+        if not torch.is_tensor(indices):
+            indices = torch.tensor(indices, dtype=torch.long)
+
+        indices = indices.long()
+        device = indices.device
+
+        # Ensure length == num_positions (20) just in case
+        N = self.num_positions
+        if indices.numel() < N:
+            pad_id = self.vocab_size - 1  # assumes space is last; OK for your vocab list
+            pad = torch.full((N - indices.numel(),), pad_id, dtype=torch.long, device=device)
+            indices = torch.cat([indices, pad], dim=0)
+        elif indices.numel() > N:
+            indices = indices[:N]
+
+        # Embeddings: (20, d_model)
+        x = self.tok_embed(indices)          # (N, D)
+        # print('x-embedd ed toke', x)
+        # x = self.pos_enc(x)                 # (N, D)
+    
+        attn_mask = self._build_attn_mask(N, device=device)
+
+        attn_maps = []
+        for layer in self.layers:
+            # print('layer', layer)
+            x, attn = layer(x, attn_mask=attn_mask)   # x: (N,D), attn:(N,N)
+            attn_maps.append(attn)
+
+        logits = self.classifier(x)                 # (N, num_classes)
+        log_probs = F.log_softmax(logits, dim=-1)   # (N, num_classes)
+
+        return log_probs, attn_maps
+
+
+
+        # raise Exception("Implement me")
 
 
 # Your implementation of the Transformer layer goes here. It should take vectors and return the same number of vectors
@@ -62,11 +142,56 @@ class TransformerLayer(nn.Module):
         :param d_internal: The "internal" dimension used in the self-attention computation. Your keys and queries
         should both be of this length.
         """
-        super().__init__()
-        raise Exception("Implement me")
 
-    def forward(self, input_vecs):
-        raise Exception("Implement me")
+        # we need to write a single attnetion layer over here than extend it to multiple layers using
+        # using transformer architecture
+        super().__init__()
+        self.d_model = d_model
+        self.d_internal = d_internal
+
+        # Q/K/V projections: d_model -> d_internal
+        self.Wq = nn.Linear(d_model, d_internal, bias=False)
+        self.Wk = nn.Linear(d_model, d_internal, bias=False)
+        self.Wv = nn.Linear(d_model, d_internal, bias=False)
+
+        # Output projection back to d_model for residual
+        self.Wo = nn.Linear(d_internal, d_model, bias=False)
+
+        # LayerNorm + FFN (typical encoder-layer parts)
+        self.ln1 = nn.LayerNorm(d_model)
+        self.ln2 = nn.LayerNorm(d_model)
+        self.ff1 = nn.Linear(d_model, 4 * d_model)
+        self.ff2 = nn.Linear(4 * d_model, d_model)
+
+    def forward(self, input_vecs, attn_mask=None):
+        x = input_vecs  # (N, D)
+
+        # ---- Self-attention  ----
+        x_norm = x
+
+        Q = self.Wq(x_norm)   # (N, d_internal)
+        K = self.Wk(x_norm)   # (N, d_internal)
+        V = self.Wv(x_norm)   # (N, d_internal)
+
+        scores = (Q @ K.transpose(-2, -1)) / math.sqrt(self.d_internal)  # (N, N)
+
+        if attn_mask is not None:
+            scores = scores.masked_fill(attn_mask, float("-inf"))
+
+        attn = F.softmax(scores, dim=-1)            # (N, N)
+        context = attn @ V                          # (N, d_internal)
+        attn_out = self.Wo(context)                 # (N, d_model)
+
+        x = x + attn_out                            # residual
+
+        # ---- Feed-forward (pre-LN) ----
+        x_norm2 = x
+         # self.ln2(x)
+        ff = self.ff2(F.gelu(self.ff1(x_norm2)))    # (N, d_model)
+        x = x + ff                                  # residual
+
+        return x, attn
+        # raise Exception("Implement me")
 
 
 # Implementation of positional encoding that you can use in your network
@@ -108,25 +233,51 @@ def train_classifier(args, train, dev):
 
     # The following code DOES NOT WORK but can be a starting point for your implementation
     # Some suggested snippets to use:
-    model = Transformer()
+
+    model = Transformer(vocab_size= 27, num_positions= 20, num_classes= 3, num_layers= 2, d_model= 32, d_internal= 64)
+
+    task = getattr(args, "task", "")
+    print(task)
+    if task == "BEFORE":
+        model.attn_mode = "causal"
+    elif task == "AFTER":
+        model.attn_mode = "anti_causal"
+    else:
+        model.attn_mode = "bidir"
+
+
     model.zero_grad()
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
+    start = time.time()
+
     num_epochs = 10
     for t in range(0, num_epochs):
         loss_this_epoch = 0.0
-        random.seed(t)
+        random.seed(t) 
         # You can use batching if you'd like
         ex_idxs = [i for i in range(0, len(train))]
         random.shuffle(ex_idxs)
         loss_fcn = nn.NLLLoss()
+
         for ex_idx in ex_idxs:
-            loss = loss_fcn(...) # TODO: Run forward and compute loss
+            
+            optimizer.zero_grad()
+            log_probability, attn = model(train[ex_idx].input_tensor)
+            # print('ouput from the model', log_probability, attn)
+
+            actual_ouput = train[ex_idx].output_tensor.long()
+
+            loss = loss_fcn(log_probability, actual_ouput) # TODO: Run forward and compute loss
             # model.zero_grad()
-            # loss.backward()
-            # optimizer.step()
+            loss.backward()
+            optimizer.step()
             loss_this_epoch += loss.item()
+        print(f"epoch {t}: loss={loss_this_epoch:.4f}")
+        end = time.time()
+    print(f"Total time: {end - start:.3f} seconds")
+
     model.eval()
     return model
 
