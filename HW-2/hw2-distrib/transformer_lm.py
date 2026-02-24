@@ -137,14 +137,8 @@ class TransformerLM(nn.Module):
         # N = self.num_positions
 
         #maybe we can pad if size is less than 20
-        x_idx = x
-        if not torch.is_tensor(x_idx):
-            x_idx = torch.tensor(x_idx, dtype=torch.long)
-
-        x_idx = x_idx.long()
-        x_idx = x_idx.to(next(self.parameters()).device)  # <<< ADD THIS LINE
-
-        device = x_idx.device
+        device = next(self.parameters()).device
+        x_idx = x.long().to(device)
 
         # pad/truncate to num_positions
         Nmax = self.num_positions
