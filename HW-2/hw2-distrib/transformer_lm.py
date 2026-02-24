@@ -143,7 +143,8 @@ class TransformerLM(nn.Module):
         # pad/truncate to num_positions
         Nmax = self.num_positions
         if x_idx.numel() < Nmax:
-            pad_id = self.vocab_index.index_of(' ') if hasattr(self.vocab_index, "index_of") else (self.num_classess - 1)            pad = torch.full((Nmax - x_idx.numel(),), pad_id, dtype=torch.long, device=device)
+            pad_id = self.vocab_index.index_of(' ') if hasattr(self.vocab_index, "index_of") else (self.num_classess - 1)      
+            pad = torch.full((Nmax - x_idx.numel(),), pad_id, dtype=torch.long, device=device)
             x_idx = torch.cat([x_idx, pad], dim=0)
         elif x_idx.numel() > Nmax:
             x_idx = x_idx[:Nmax]
