@@ -159,6 +159,7 @@ class TransformerLM(nn.Module):
         src = self.tok_embedding(x_idx) + self.pos_embedding(pos_ids.unsqueeze(0))
 
         causal = self.causal_mask(N, device=device)
+        tgt = src   # <<< ADD THIS BACK
 
         # make encoder causal too to avoid "future leakage" into memory
         memory = self.encoder(src, mask=causal)                           # (1, N, D)
