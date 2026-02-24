@@ -232,7 +232,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
             )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
+    model = model.to(device)
 
     model.zero_grad()
     optimizer = optim.Adam(model.parameters(), lr = 1e-4)
