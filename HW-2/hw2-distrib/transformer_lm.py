@@ -155,11 +155,13 @@ class TransformerLM(nn.Module):
         N = x_idx.size(0)
 
         # add a fake batch dim of 1: (1, N)
-        x_idx_b = x_idx.unsqueeze(0)
+        x_idx = x_idx.unsqueeze(0)
 
-        pos_ids = torch.arange(N, device=device).unsqueeze(0)  # (1, N)
+        pos_ids = torch.arange(N, device=device)
 
-        src = self.tok_embedding(x_idx_b) + self.pos_embedding(pos_ids)  # (1, N, D)
+        src = self.tok_embedding(
+            
+        ) + self.pos_embedding(pos_ids)  # (1, N, D)
         tgt = src
 
         causal = self.causal_mask(N, device=device)
