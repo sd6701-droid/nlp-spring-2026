@@ -256,7 +256,7 @@ def train_classifier(args, train, dev):
     for t in range(0, num_epochs):
         loss_this_epoch = 0.0
         random.seed(t) 
-        # You can use batching if you'd like
+
         ex_idxs = [i for i in range(0, len(train))]
         random.shuffle(ex_idxs)
         loss_fcn = nn.NLLLoss()
@@ -266,7 +266,8 @@ def train_classifier(args, train, dev):
             optimizer.zero_grad()
             log_probability, attn = model(train[ex_idx].input_tensor)
             # print('ouput from the model', log_probability, attn)
-
+            print(log_probability.shape)
+            
             actual_ouput = train[ex_idx].output_tensor.long()
 
             loss = loss_fcn(log_probability, actual_ouput) # TODO: Run forward and compute loss
@@ -275,7 +276,7 @@ def train_classifier(args, train, dev):
             optimizer.step()
             loss_this_epoch += loss.item()
         print(f"epoch {t}: loss={loss_this_epoch:.4f}")
-        end = time.time()
+    end = time.time()
     print(f"Total time: {end - start:.3f} seconds")
 
     model.eval()
