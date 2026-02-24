@@ -256,7 +256,8 @@ def train_lm(args, train_text, dev_text, vocab_index):
             y_str = train_text[i+1 : i+21]
             y_indexed = [vocab_index.index_of(c) for c in y_str]
             y_tensor = torch.tensor(y_indexed, dtype=torch.long)   # (20,)
-            
+            x_tensor = x_tensor.to(device)
+            y_tensor = y_tensor.to(device)
             log_probability = model(x_tensor) # we need to send here first 20 letters 
 
             # compare the output with 20th letter prediction and the calculate the loss
