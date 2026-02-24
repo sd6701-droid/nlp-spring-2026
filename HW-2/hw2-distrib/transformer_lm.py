@@ -149,8 +149,7 @@ class TransformerLM(nn.Module):
         # pad/truncate to num_positions
         Nmax = self.num_positions
         if x_idx.numel() < Nmax:
-            pad_id = self.vocab_index.index_of(' ') if hasattr(self.vocab_index, "index_of") else (self.num_classes - 1)
-            pad = torch.full((Nmax - x_idx.numel(),), pad_id, dtype=torch.long, device=device)
+            pad_id = self.vocab_index.index_of(' ') if hasattr(self.vocab_index, "index_of") else (self.num_classess - 1)            pad = torch.full((Nmax - x_idx.numel(),), pad_id, dtype=torch.long, device=device)
             x_idx = torch.cat([x_idx, pad], dim=0)
         elif x_idx.numel() > Nmax:
             x_idx = x_idx[:Nmax]
@@ -162,10 +161,7 @@ class TransformerLM(nn.Module):
 
         pos_ids = torch.arange(N, device=device)
 
-        src = self.tok_embedding(
-            
-        ) + self.pos_embedding(pos_ids)  # (1, N, D)
-        tgt = src
+        src = self.tok_embedding(x_idx) + self.pos_embedding(pos_ids.unsqueeze(0))
 
         causal = self.causal_mask(N, device=device)
 
@@ -180,8 +176,8 @@ class TransformerLM(nn.Module):
 
 class NeuralLanguageModel(LanguageModel):
     def __init__(self, model: TransformerLM, vocab_index, num_positions: int = 20):
-        self.model = model,
-        self.vocab_index = vocab_index,
+        self.model = model
+        self.vocab_index = vocab_index
         self.num_positions = num_positions
         self.model.eval()
 
