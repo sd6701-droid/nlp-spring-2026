@@ -273,6 +273,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
             log_probs = model(x_tensor)
             loss = loss_function(log_probs.view(-1, 27), y_tensor.view(-1))
             loss.backward()
+            optimizer.step()
             loss_this_epoch += loss.item()
 
         print(f"epoch {epoch}: loss={loss_this_epoch:.4f}")
