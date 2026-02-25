@@ -217,6 +217,10 @@ def train_lm(args, train_text, dev_text, vocab_index):
     :return: a NeuralLanguageModel instance trained on the given data
     """
 
+
+    print("CUDA available:", torch.cuda.is_available())
+    if torch.cuda.is_available():
+        print("GPU name:", torch.cuda.get_device_name(0))
     model = TransformerLM(
                 vocab_index, 
                 num_positions = 20, 
@@ -235,7 +239,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     model.zero_grad()
     optimizer = optim.Adam(model.parameters(), lr = 1e-4)
 
-    num_epochs = 1
+    num_epochs = 5
     start = time.time()
 
     for epoch in range(0, num_epochs):
@@ -244,7 +248,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         
         loss_function = nn.NLLLoss()
 
-        for i in range(0, len(train_text) - 21):
+        for i in range(0, len(train_text) - 99000):
             optimizer.zero_grad()
 
             x_str = train_text[i : i+20]
