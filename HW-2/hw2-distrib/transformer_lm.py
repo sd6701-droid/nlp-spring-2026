@@ -248,7 +248,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         
         loss_function = nn.NLLLoss()
 
-        for i in range(0, len(train_text) - 99000):
+        for i in range(0, len(train_text) - 75000):
             optimizer.zero_grad()
 
             x_str = train_text[i : i+20]
