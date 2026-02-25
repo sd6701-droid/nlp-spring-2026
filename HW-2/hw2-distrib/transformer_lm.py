@@ -129,47 +129,48 @@ class TransformerLM(nn.Module):
     def causal_mask(self, N, device):
         return torch.triu(torch.ones(N, N, dtype=torch.bool, device=device), diagonal=1)
 
-
     def forward(self, x):
 
-        # device = x.device
-
-        # N = self.num_positions
-
-        #maybe we can pad if size is less than 20
         device = next(self.parameters()).device
-        x_idx = x.long().to(device)
+        x = x.long().to(device)
 
-        # pad/truncate to num_positions
+        # If single sample (20,) → make it (1, 20)
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+
+        batch_size, seq_len = x.shape
+
         Nmax = self.num_positions
-        if x_idx.numel() < Nmax:
-            pad_id = self.vocab_index.index_of(' ') if hasattr(self.vocab_index, "index_of") else (self.num_classess - 1)      
-            pad = torch.full((Nmax - x_idx.numel(),), pad_id, dtype=torch.long, device=device)
-            x_idx = torch.cat([x_idx, pad], dim=0)
-        elif x_idx.numel() > Nmax:
-            x_idx = x_idx[:Nmax]
 
-        N = x_idx.size(0)
+        if seq_len < Nmax:
+            pad_id = self.vocab_index.index_of(' ')
+            pad = torch.full(
+                (batch_size, Nmax - seq_len),
+                pad_id,
+                dtype=torch.long,
+                device=device
+            )
+            x = torch.cat([x, pad], dim=1)
+        elif seq_len > Nmax:
+            x = x[:, :Nmax]
 
-        # add a fake batch dim of 1: (1, N)
-        x_idx = x_idx.unsqueeze(0)
+        batch_size, N = x.shape
 
-        pos_ids = torch.arange(N, device=device)
+        pos_ids = torch.arange(N, device=device).unsqueeze(0).expand(batch_size, N)
 
-        src = self.tok_embedding(x_idx) + self.pos_embedding(pos_ids.unsqueeze(0))
+        src = self.tok_embedding(x) + self.pos_embedding(pos_ids)
 
-        causal = self.causal_mask(N, device=device)
+        causal = self.causal_mask(N, device)
 
-        tgt = src   # <<< ADD THIS BACK
+        memory = self.encoder(src, mask=causal)
+        out = self.decoder(src, memory,
+                        tgt_mask=causal,
+                        memory_mask=causal)
 
-        # make encoder causal too to avoid "future leakage" into memory
-        memory = self.encoder(src, mask=causal)                           # (1, N, D)
-        out = self.decoder(tgt, memory, tgt_mask=causal, memory_mask=causal)  # (1, N, D)
+        logits = self.classifier(out)
+        log_probs = F.log_softmax(logits, dim=-1)
 
-        logits = self.classifier(out)                 # (1, N, V)
-        log_probs = F.log_softmax(logits, dim=-1)     # (1, N, V)
-
-        return log_probs.squeeze(0) 
+        return log_probs
 
 class NeuralLanguageModel(LanguageModel):
     def __init__(self, model: TransformerLM, vocab_index, num_positions: int = 20):
@@ -194,7 +195,13 @@ class NeuralLanguageModel(LanguageModel):
     def get_next_char_log_probs(self, context):
         x = self._context_to_tensor(context)          # (20,)
         log_probs = self.model(x)                     # (20, 27)
-        last = log_probs[-1]                          # (27,)
+        log_probs = self.model(x)
+
+        # If batched, take first batch
+        if log_probs.dim() == 3:
+            log_probs = log_probs[0]
+
+        last = log_probs[-1]                # (27,)
         return last.detach().cpu().numpy()
 
 
@@ -239,7 +246,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     model.zero_grad()
     optimizer = optim.Adam(model.parameters(), lr = 1e-4)
 
-    num_epochs = 5
+    num_epochs = 10
     start = time.time()
 
     for epoch in range(0, num_epochs):
@@ -247,28 +254,25 @@ def train_lm(args, train_text, dev_text, vocab_index):
         random.seed(epoch)
         
         loss_function = nn.NLLLoss()
+        batch_size = 128
 
-        for i in range(0, len(train_text) - 75000):
-            optimizer.zero_grad()
+        for i in range(0, len(train_text) - 95000, batch_size):
+            batch_x = []
+            batch_y = []
 
-            x_str = train_text[i : i+20]
-            x_indexed = [vocab_index.index_of(c) for c in x_str]   # list of ints length 20
-            x_tensor = torch.tensor(x_indexed, dtype=torch.long)
+            for j in range(batch_size):
+                x_str = train_text[i+j : i+j+20]
+                y_str = train_text[i+j+1 : i+j+21]
 
-            y_str = train_text[i+1 : i+21]
-            y_indexed = [vocab_index.index_of(c) for c in y_str]
-            y_tensor = torch.tensor(y_indexed, dtype=torch.long)   # (20,)
-            x_tensor = x_tensor.to(device)
-            y_tensor = y_tensor.to(device)
-            log_probability = model(x_tensor) # we need to send here first 20 letters 
+                batch_x.append([vocab_index.index_of(c) for c in x_str])
+                batch_y.append([vocab_index.index_of(c) for c in y_str])
 
-            # compare the output with 20th letter prediction and the calculate the loss
-            loss = loss_function(log_probability, y_tensor)
+            x_tensor = torch.tensor(batch_x).to(device)
+            y_tensor = torch.tensor(batch_y).to(device)
 
-            
-
+            log_probs = model(x_tensor)
+            loss = loss_function(log_probs.view(-1, 27), y_tensor.view(-1))
             loss.backward()
-            optimizer.step()
             loss_this_epoch += loss.item()
 
         print(f"epoch {epoch}: loss={loss_this_epoch:.4f}")
