@@ -254,7 +254,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         random.seed(epoch)
         
         loss_function = nn.NLLLoss()
-        batch_size = 128
+        batch_size = 32
 
         for i in range(0, len(train_text) - 1000, batch_size):
             batch_x = []
