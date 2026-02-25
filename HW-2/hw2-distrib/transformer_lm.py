@@ -246,7 +246,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
     model.zero_grad()
     optimizer = optim.Adam(model.parameters(), lr = 1e-4)
 
-    num_epochs = 10
+    num_epochs = 11
     start = time.time()
 
     for epoch in range(0, num_epochs):
@@ -256,7 +256,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         loss_function = nn.NLLLoss()
         batch_size = 128
 
-        for i in range(0, len(train_text) - 50000, batch_size):
+        for i in range(0, len(train_text) - 21, batch_size):
             batch_x = []
             batch_y = []
 
