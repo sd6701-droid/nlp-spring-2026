@@ -256,7 +256,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
         loss_function = nn.NLLLoss()
         batch_size = 128
 
-        for i in range(0, len(train_text) - 95000, batch_size):
+        for i in range(0, len(train_text) - 75000, batch_size):
             batch_x = []
             batch_y = []
 
