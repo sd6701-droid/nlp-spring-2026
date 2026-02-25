@@ -232,7 +232,7 @@ def train_lm(args, train_text, dev_text, vocab_index):
                 vocab_index, 
                 num_positions = 20, 
                 num_classess = 27,
-                num_layers = 1,
+                num_layers = 2,
                 d_model = 32,
                 d_internal = 64,
                 nhead=4,
