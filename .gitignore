@@ -1,0 +1,23 @@
+.DS_Store
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+2590-hw3/
+# Jupyter
+.ipynb_checkpoints/
+
+# Local outputs
+results/
+*.log
+

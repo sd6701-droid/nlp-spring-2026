@@ -1,0 +1,11 @@
+gradescope-utils==0.5.0
+pandas==2.2.3
+numpy==1.26.4
+tqdm
+scikit-learn==1.6.1
+torch==2.8.0
+transformers==4.57.0
+accelerate==1.4.0
+sentencepiece
+ipykernel
+ipywidgets
