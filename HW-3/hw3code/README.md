@@ -15,3 +15,11 @@ To register a jupyter kernel from your conda environment, use
 conda activate 2590-hw3
 python3 -m ipykernel install --user --name envkernel
 ```
+```
+source /share/apps/pyenv/py3.9/etc/profile.d/conda.sh
+conda activate 2590-hw3x
+```
+
+source /share/apps/pyenv/py3.9/etc/profile.d/conda.sh
+conda activate 2590-hw3-py312
+python --version

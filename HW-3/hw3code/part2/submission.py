@@ -5,27 +5,23 @@ import random
 import numpy as np
 import requests
 import re
+import os
 
 def your_netid():
-    YOUR_NET_ID = 'YOUR_NET_ID'
+    YOUR_NET_ID = 'SD6701'
     return YOUR_NET_ID
 
 def your_hf_token():
-    YOUR_HF_TOKEN = 'YOUR_HF_TOKEN'
-    return YOUR_HF_TOKEN
+    return os.environ.get("HF_TOKEN", "")
 
 
-# for adding small numbers (1-6 digits) and large numbers (7 digits), write prompt prefix and prompt suffix separately.
+# for adding small numbers (1-6 digits) and large numbers (7 digits), wcna rite prompt prefix and prompt suffix separately.
 def your_prompt():
-    """Returns a prompt to add to "[PREFIX]a+b[SUFFIX]", where a,b are integers
-    Returns:
-        A string.
-    Example: a=1111, b=2222, prefix='Input: ', suffix='\nOutput: '
-    """
-    prefix = '''Question: what is 1234567+1234567?\nAnswer: 2469134\nQuestion: what is '''
-
-    suffix = '?\nAnswer: '
-
+    here = os.path.dirname(__file__)
+    prompt_path = os.path.join(here, "prompt.txt")
+    with open(prompt_path, "r") as f:
+        prefix = f.read()
+    suffix = "?\nAnswer: "
     return prefix, suffix
 
 
@@ -40,10 +36,10 @@ def your_config():
     """
     config = {
         'max_tokens': 50, # max_tokens must be >= 50 because we don't always have prior on output length 
-        'temperature': 0.7,
+        'temperature': 0.1,
         'top_k': 50,
-        'top_p': 0.7,
-        'repetition_penalty': 1,
+        'top_p': 0.9,
+        'repetition_penalty': 1.1,
         'stop': []}
     
     return config
@@ -62,9 +58,29 @@ def your_post_processing(output_string):
         by extracting the two given numbers and adding them.
         the autograder will check whether the post processing function contains arithmetic additiona and the graders might also manually check.
     """
-    only_digits = re.sub(r"\D", "", output_string)
-    try:
-        res = int(only_digits)
-    except:
-        res = 0
-    return res
+    stripped = output_string.strip()
+    if not stripped:
+        return 0
+
+    for line in stripped.splitlines():
+        match = re.search(r"answer:\s*(\d{8})", line.strip(), flags=re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+
+    match = re.search(r"^\s*(\d{8})\s*$", stripped.splitlines()[0])
+    if match:
+        return int(match.group(1))
+
+    match = re.search(r"\d{8}", stripped)
+    if match:
+        return int(match.group(0))
+
+    match = re.search(r"\d{7}", stripped)
+    if match:
+        return int(match.group(0))
+
+    match = re.search(r"\d+", stripped)
+    if match:
+        return int(match.group(0))
+
+    return 0
