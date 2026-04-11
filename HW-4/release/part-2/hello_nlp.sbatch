@@ -16,3 +16,4 @@ conda activate nlp_hw4
 echo "Python: $(which python)"
 echo "Python version: $(python --version)"
 python -c "print('hello world')"
+python -m pip list
