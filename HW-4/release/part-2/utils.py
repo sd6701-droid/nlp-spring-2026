@@ -67,6 +67,13 @@ def save_queries_and_records(sql_queries: List[str], sql_path: str, record_path:
         * sql_path (str): Path to save SQL queries
         * record_path (str): Path to save database records associated with queries
     '''
+    sql_dir = os.path.dirname(sql_path)
+    record_dir = os.path.dirname(record_path)
+    if sql_dir:
+        os.makedirs(sql_dir, exist_ok=True)
+    if record_dir:
+        os.makedirs(record_dir, exist_ok=True)
+
     # First save the queries
     with open(sql_path, 'w') as f:
         for query in sql_queries:
@@ -196,7 +203,8 @@ def set_random_seeds(seed_value=42):
     np.random.seed(seed_value)
     
     torch.manual_seed(seed_value)
-    torch.cuda.manual_seed(seed_value)
-    torch.cuda.manual_seed_all(seed_value)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed_value)
+        torch.cuda.manual_seed_all(seed_value)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
