@@ -1,6 +1,17 @@
 import os
 import argparse
+import site
+import sys
 from tqdm import tqdm
+
+user_site = site.getusersitepackages()
+if isinstance(user_site, str):
+    user_sites = [user_site]
+else:
+    user_sites = list(user_site)
+for user_site_path in user_sites:
+    while user_site_path in sys.path:
+        sys.path.remove(user_site_path)
 
 import torch
 import torch.nn as nn
