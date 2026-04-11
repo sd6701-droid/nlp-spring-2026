@@ -14,6 +14,8 @@
 #SBATCH --export=ALL
 #SBATCH --requeue
 
+set -euo pipefail
+
 echo "========================================"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
@@ -30,6 +32,7 @@ conda activate nlp_hw4
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
+PYTHON_BIN="/home/sd6701/miniconda3/envs/nlp_hw4/bin/python"
 
 EXPERIMENT_NAME="experiment_${SLURM_JOB_ID}"
 DEV_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_dev.sql"
@@ -39,7 +42,8 @@ TEST_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_test.pkl"
 
 echo "Python: $(which python)"
 echo "Python version: $(python --version)"
-python -c "import sys, torch; print('Executable:', sys.executable); print('Torch version:', torch.__version__); print('Torch path:', torch.__file__); print('CUDA available:', torch.cuda.is_available())"
+echo "Env python: ${PYTHON_BIN}"
+"${PYTHON_BIN}" -c "import sys, numpy, torch, tqdm; print('Executable:', sys.executable); print('Torch version:', torch.__version__); print('Torch path:', torch.__file__); print('CUDA available:', torch.cuda.is_available()); print('NumPy version:', numpy.__version__); print('tqdm version:', tqdm.__version__)"
 echo "Experiment name: ${EXPERIMENT_NAME}"
 echo "Dev SQL output: ${DEV_SQL_FILE}"
 echo "Dev records output: ${DEV_RECORDS_FILE}"
@@ -47,13 +51,13 @@ echo "Test SQL output: ${TEST_SQL_FILE}"
 echo "Test records output: ${TEST_RECORDS_FILE}"
 echo "========================================"
 
-python train_t5.py \
+"${PYTHON_BIN}" train_t5.py \
   --finetune \
   --experiment_name "${EXPERIMENT_NAME}" \
   --max_n_epochs 10 \
   --patience_epochs 3
 
-python evaluate.py \
+"${PYTHON_BIN}" evaluate.py \
   --predicted_sql "${DEV_SQL_FILE}" \
   --predicted_records "${DEV_RECORDS_FILE}" \
   --development_sql data/dev.sql \
