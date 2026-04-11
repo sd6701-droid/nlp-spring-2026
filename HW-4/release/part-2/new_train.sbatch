@@ -10,7 +10,7 @@
 set -euo pipefail
 
 singularity exec --cleanenv --nv \
-  --overlay /scratch/sd6701/overlay-25GB-500K.ext3:rw \
+  --overlay /scratch/sd6701/overlay-25GB-500K.ext3:ro \
   /scratch/sd6701/cuda12.6.3-cudnn9.5.1-ubuntu22.04.5.sif \
   /bin/bash -lc '
 set -euo pipefail
