@@ -35,6 +35,16 @@ else:
     DEVICE = torch.device('cpu')
 PAD_IDX = 0
 
+def attach_slurm_job_id(experiment_name):
+    job_id = os.environ.get("SLURM_JOB_ID")
+    if not job_id:
+        return experiment_name
+
+    suffix = f"_{job_id}"
+    if experiment_name.endswith(suffix):
+        return experiment_name
+    return f"{experiment_name}{suffix}"
+
 def get_args():
     '''
     Arguments for training. You may choose to change or extend these as you see fit.
@@ -268,6 +278,7 @@ def test_inference(args, model, test_loader, model_sql_path, model_record_path):
 def main():
     # Get key arguments
     args = get_args()
+    args.experiment_name = attach_slurm_job_id(args.experiment_name)
     set_random_seeds(args.seed)
     if args.use_wandb:
         # Recommended: Using wandb (or tensorboard) for result logging can make experimentation easier
