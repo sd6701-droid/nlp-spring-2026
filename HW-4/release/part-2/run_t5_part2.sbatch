@@ -27,7 +27,7 @@ mkdir -p /home/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/err
 
 cd /home/sd6701/nlp-spring-2026/HW-4/release/part-2 || exit 1
 
-source /home/sd6701/miniconda3/etc/profile.d/conda.sh
+source /scratch/sd6701/miniconda3/etc/profile.d/conda.sh
 conda activate nlp_hw4
 
 export PYTHONNOUSERSITE=1
