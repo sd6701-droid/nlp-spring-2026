@@ -2,8 +2,8 @@
 #SBATCH --job-name=t5_ft
 #SBATCH --account=csci_ga_2590_001-2026sp
 #SBATCH --partition=c12m85-a100-1
-#SBATCH --output=%j_%x.out
-#SBATCH --error=%j_%x.err
+#SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/out/%j_%x.out
+#SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/err/%j_%x.err
 #SBATCH --time=01:00:00
 #SBATCH --gres=gpu:1
 
