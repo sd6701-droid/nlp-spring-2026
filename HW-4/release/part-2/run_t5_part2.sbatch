@@ -32,7 +32,12 @@ conda activate nlp_hw4
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
-PYTHON_BIN="/home/sd6701/miniconda3/envs/nlp_hw4/bin/python"
+PYTHON_BIN="$(command -v python)"
+
+if [[ -z "${PYTHON_BIN}" ]]; then
+  echo "No python found after activating conda env" >&2
+  exit 1
+fi
 
 RUN_ID="${SLURM_JOB_ID:-manual}"
 EXPERIMENT_NAME="experiment_${RUN_ID}"
@@ -44,6 +49,8 @@ TEST_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_test.pkl"
 
 echo "Python: $(which python)"
 echo "Python version: $(python --version)"
+echo "Conda env: ${CONDA_DEFAULT_ENV:-unset}"
+echo "Conda prefix: ${CONDA_PREFIX:-unset}"
 echo "Env python: ${PYTHON_BIN}"
 "${PYTHON_BIN}" -c "import sys, numpy, torch, tqdm; print('Executable:', sys.executable); print('Torch version:', torch.__version__); print('Torch path:', torch.__file__); print('CUDA available:', torch.cuda.is_available()); print('NumPy version:', numpy.__version__); print('tqdm version:', tqdm.__version__)"
 echo "Run ID: ${RUN_ID}"
