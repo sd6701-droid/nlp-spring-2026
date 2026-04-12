@@ -8,6 +8,11 @@ import torch
 
 PAD_IDX = 0
 MODEL_NAME = "google-t5/t5-small"
+TASK_PREFIX = "translate English to SQL: "
+
+
+def build_encoder_input(nl_query):
+    return f"{TASK_PREFIX}{nl_query}"
 
 class T5Dataset(Dataset):
 
@@ -40,7 +45,7 @@ class T5Dataset(Dataset):
         if split == "test":
             for nl_query in nl_queries:
                 encoder_ids = tokenizer(
-                    nl_query,
+                    build_encoder_input(nl_query),
                     add_special_tokens=True,
                     return_attention_mask=False,
                 )["input_ids"]
@@ -54,7 +59,7 @@ class T5Dataset(Dataset):
 
         for nl_query, sql_query in zip(nl_queries, sql_queries):
             encoder_ids = tokenizer(
-                nl_query,
+                build_encoder_input(nl_query),
                 add_special_tokens=True,
                 return_attention_mask=False,
             )["input_ids"]
@@ -172,9 +177,9 @@ def load_lines(path):
     return lines
 
 def load_prompting_data(data_folder):
-    train_x = load_lines(os.path.join(data_folder, "train.nl"))
+    train_x = [build_encoder_input(line) for line in load_lines(os.path.join(data_folder, "train.nl"))]
     train_y = load_lines(os.path.join(data_folder, "train.sql"))
-    dev_x = load_lines(os.path.join(data_folder, "dev.nl"))
+    dev_x = [build_encoder_input(line) for line in load_lines(os.path.join(data_folder, "dev.nl"))]
     dev_y = load_lines(os.path.join(data_folder, "dev.sql"))
-    test_x = load_lines(os.path.join(data_folder, "test.nl"))
+    test_x = [build_encoder_input(line) for line in load_lines(os.path.join(data_folder, "test.nl"))]
     return train_x, train_y, dev_x, dev_y, test_x

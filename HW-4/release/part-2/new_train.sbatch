@@ -25,23 +25,23 @@ export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
 PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
 
-EPOCHS=30
+EPOCHS=29
 PATIENCE=100
 LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.0
 SCHEDULER=cosine
 WARMUP_EPOCHS=1
-BATCH_SIZE=8
+BATCH_SIZE=64
 TEST_BATCH_SIZE=16
 NUM_BEAMS=8
-MAX_GEN_LEN=64
+MAX_GEN_LEN=512
 RUN_ID=${SLURM_JOB_ID:-manual}
 MODEL_TAG=ft
 LR_TAG=${LEARNING_RATE//./p}
 WD_TAG=${WEIGHT_DECAY//./p}
 EXPERIMENT_NAME="experiment_${MODEL_TAG}_ep${EPOCHS}_pat${PATIENCE}_lr${LR_TAG}_wd${WD_TAG}_bs${BATCH_SIZE}_tbs${TEST_BATCH_SIZE}_beam${NUM_BEAMS}_gen${MAX_GEN_LEN}_sched${SCHEDULER}_warm${WARMUP_EPOCHS}_${RUN_ID}"
 
-CHECKPOINT_DIR="checkpoints/ft_experiments/${EXPERIMENT_NAME}"
+RUN_DIR="runs/ft_experiments/${EXPERIMENT_NAME}"
 DEV_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_dev.sql"
 DEV_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_dev.pkl"
 TEST_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_test.sql"
@@ -50,9 +50,9 @@ SUBMIT_DEV_SQL_FILE="results/t5_ft_experiment_dev.sql"
 SUBMIT_DEV_RECORDS_FILE="records/t5_ft_experiment_dev.pkl"
 SUBMIT_TEST_SQL_FILE="results/t5_ft_experiment_test.sql"
 SUBMIT_TEST_RECORDS_FILE="records/t5_ft_experiment_test.pkl"
-RUN_DETAILS_FILE="${CHECKPOINT_DIR}/run_details.txt"
+RUN_DETAILS_FILE="${RUN_DIR}/run_details.txt"
 
-mkdir -p "${CHECKPOINT_DIR}"
+mkdir -p "${RUN_DIR}"
 cat > "${RUN_DETAILS_FILE}" <<EOF
 job_id=${RUN_ID}
 experiment_name=${EXPERIMENT_NAME}
@@ -73,7 +73,7 @@ EOF
 echo "Python: $(${PYTHON_BIN} -c "import sys; print(sys.executable)")"
 echo "Python version: $(${PYTHON_BIN} --version)"
 echo "Experiment name: ${EXPERIMENT_NAME}"
-echo "Checkpoint dir: ${CHECKPOINT_DIR}"
+echo "Run dir: ${RUN_DIR}"
 echo "Run details file: ${RUN_DETAILS_FILE}"
 echo "Dev SQL output: ${DEV_SQL_FILE}"
 echo "Dev records output: ${DEV_RECORDS_FILE}"
