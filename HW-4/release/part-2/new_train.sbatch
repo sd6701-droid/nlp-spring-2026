@@ -4,7 +4,7 @@
 #SBATCH --partition=c12m85-a100-1
 #SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/out/%j_%x.out
 #SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/err/%j_%x.err
-#SBATCH --time=01:00:00
+#SBATCH --time=05:00:00
 #SBATCH --gres=gpu:1
 
 set -euo pipefail
@@ -31,7 +31,7 @@ LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.0
 SCHEDULER=cosine
 WARMUP_EPOCHS=1
-BATCH_SIZE=32
+BATCH_SIZE=8
 TEST_BATCH_SIZE=16
 NUM_BEAMS=4
 MAX_GEN_LEN=128
