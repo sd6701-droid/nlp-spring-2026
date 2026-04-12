@@ -12,12 +12,9 @@ MODEL_NAME = "google-t5/t5-small"
 TASK_PREFIX = "translate English to SQL: "
 MAX_SQL_TOKENS = 400
 SCHEMA_HINT = (
-    "tables: flight(flight_id,airline_code,from_airport,to_airport,departure_time,"
-    "arrival_time,stops,round_trip_cost), airport_service(city_code,airport_code), "
-    "city(city_code,city_name), airline(airline_code,airline_name), "
-    "fare(fare_id,round_trip_cost), flight_fare(flight_id,fare_id), "
-    "flight_stop(flight_id,stop_airport), ground_service(city_code,airport_code,transport_type,ground_fare), "
-    "airport(airport_code,airport_name), days(day_name,day_id), date_day(day_number,month_number,year,day_name)"
+    "tables: flight, airport_service, city, airline, "
+    "fare, flight_fare, flight_stop, ground_service, "
+    "airport, days, date_day, fare_basis, restriction"
 )
 
 CITY_MAP = {
