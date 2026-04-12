@@ -17,27 +17,49 @@ SCHEMA_HINT = (
     "airport, days, date_day, fare_basis, restriction"
 )
 
+# In load_data.py - expand these fully
 CITY_MAP = {
-    "los angeles": "LOS ANGELES",
-    "la": "LOS ANGELES",
-    "new york": "NEW YORK",
-    "nyc": "NEW YORK",
-    "san francisco": "SAN FRANCISCO",
-    "sf": "SAN FRANCISCO",
-    "washington dc": "WASHINGTON",
-    "dc": "WASHINGTON",
+    # Abbreviations
+    "los angeles": "LOS ANGELES", "la": "LOS ANGELES",
+    "new york": "NEW YORK", "nyc": "NEW YORK", "new york city": "NEW YORK",
+    "san francisco": "SAN FRANCISCO", "sf": "SAN FRANCISCO",
+    "washington dc": "WASHINGTON", "dc": "WASHINGTON",
+    "washington": "WASHINGTON",
+    "fort worth": "FORT WORTH",
+    "salt lake city": "SALT LAKE CITY",
+    "kansas city": "KANSAS CITY",
+    # ADD all cities from your flight database
+    "boston": "BOSTON", "denver": "DENVER", "dallas": "DALLAS",
+    "pittsburgh": "PITTSBURGH", "philadelphia": "PHILADELPHIA",
+    "atlanta": "ATLANTA", "chicago": "CHICAGO", "houston": "HOUSTON",
+    "baltimore": "BALTIMORE", "miami": "MIAMI", "seattle": "SEATTLE",
+    "minneapolis": "MINNEAPOLIS", "detroit": "DETROIT",
+    "charlotte": "CHARLOTTE", "cleveland": "CLEVELAND",
+    "indianapolis": "INDIANAPOLIS", "orlando": "ORLANDO",
+    "milwaukee": "MILWAUKEE", "toronto": "TORONTO",
+    "newark": "NEWARK", "nashville": "NASHVILLE",
+    "memphis": "MEMPHIS", "st. louis": "ST. LOUIS", "saint louis": "ST. LOUIS",
+    "columbus": "COLUMBUS", "cincinnati": "CINCINNATI",
+    "san diego": "SAN DIEGO", "phoenix": "PHOENIX",
+    "las vegas": "LAS VEGAS", "oakland": "OAKLAND",
+    "ontario": "ONTARIO", "long beach": "LONG BEACH",
+    "burbank": "BURBANK", "tacoma": "TACOMA",
 }
 
 AIRLINE_MAP = {
-    "american airlines": "AA",
-    "american": "AA",
-    "united airlines": "UA",
-    "united": "UA",
-    "us air": "US",
-    "delta": "DL",
+    "american airlines": "AA", "american": "AA",
+    "united airlines": "UA", "united": "UA",
+    "us air": "US", "usair": "US",
+    "delta": "DL", "delta airlines": "DL",
     "midwest express": "YX",
+    "continental": "CO", "continental airlines": "CO",
+    "southwest": "WN", "southwest airlines": "WN",
+    "alaska": "AS", "alaska airlines": "AS",
+    "northwest": "NW", "northwest airlines": "NW",
+    "twa": "TW", "trans world": "TW",
+    "lufthansa": "LH",
+    "tower air": "FF",
 }
-
 
 def has_phrase(text, phrase):
     return re.search(rf"\b{re.escape(phrase)}\b", text) is not None
@@ -47,6 +69,7 @@ def normalize_nl(nl_query):
     query_lower = nl_query.lower()
     hints = []
 
+    # Existing city/airline hints...
     for city_name, canonical_name in CITY_MAP.items():
         if has_phrase(query_lower, city_name):
             hint = f"[city={canonical_name}]"
@@ -59,9 +82,22 @@ def normalize_nl(nl_query):
             if hint not in hints:
                 hints.append(hint)
 
+    # ADD: Aggregation hints
+    if any(w in query_lower for w in ["earliest", "first", "minimum", "lowest", "cheapest", "least"]):
+        hints.append("[agg=MIN]")
+    if any(w in query_lower for w in ["latest", "last", "maximum", "highest", "most", "largest"]):
+        hints.append("[agg=MAX]")
+
+    # ADD: SELECT column hints
+    if any(w in query_lower for w in ["flight time", "departure time", "arrival time", "what time"]):
+        hints.append("[select=departure_time]")
+    if any(w in query_lower for w in ["cost", "price", "fare", "how much"]):
+        hints.append("[select=fare_id]")
+    if any(w in query_lower for w in ["transport", "ground transportation", "train", "bus", "rental"]):
+        hints.append("[select=transport_type]")
+
     if not hints:
         return nl_query
-
     return f"{nl_query} {' '.join(hints)}"
 
 
