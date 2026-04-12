@@ -25,7 +25,7 @@ export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
 PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
 
-EPOCHS=29
+EPOCHS=28
 PATIENCE=100
 LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.0
@@ -33,19 +33,19 @@ SCHEDULER=cosine
 WARMUP_EPOCHS=1
 BATCH_SIZE=64
 TEST_BATCH_SIZE=16
-NUM_BEAMS=12
-MAX_GEN_LEN=512
+NUM_BEAMS=10
+MAX_GEN_LEN=128
 RUN_ID=${SLURM_JOB_ID:-manual}
-MODEL_TAG=ft
+MODEL_TAG=scr
 LR_TAG=${LEARNING_RATE//./p}
 WD_TAG=${WEIGHT_DECAY//./p}
 EXPERIMENT_NAME="experiment_${MODEL_TAG}_ep${EPOCHS}_pat${PATIENCE}_lr${LR_TAG}_wd${WD_TAG}_bs${BATCH_SIZE}_tbs${TEST_BATCH_SIZE}_beam${NUM_BEAMS}_gen${MAX_GEN_LEN}_sched${SCHEDULER}_warm${WARMUP_EPOCHS}_${RUN_ID}"
 
-RUN_DIR="runs/ft_experiments/${EXPERIMENT_NAME}"
-DEV_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_dev.sql"
-DEV_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_dev.pkl"
-TEST_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_test.sql"
-TEST_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_test.pkl"
+RUN_DIR="runs/scr_experiments/${EXPERIMENT_NAME}"
+DEV_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_dev.sql"
+DEV_RECORDS_FILE="records/t5_scr_${EXPERIMENT_NAME}_dev.pkl"
+TEST_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_test.sql"
+TEST_RECORDS_FILE="records/t5_scr_${EXPERIMENT_NAME}_test.pkl"
 SUBMIT_DEV_SQL_FILE="results/t5_ft_experiment_dev.sql"
 SUBMIT_DEV_RECORDS_FILE="records/t5_ft_experiment_dev.pkl"
 SUBMIT_TEST_SQL_FILE="results/t5_ft_experiment_test.sql"
@@ -83,7 +83,6 @@ echo "Test records output: ${TEST_RECORDS_FILE}"
 "${PYTHON_BIN}" -c "import numpy, torch, tqdm; print(\"Torch version:\", torch.__version__); print(\"CUDA available:\", torch.cuda.is_available()); print(\"NumPy version:\", numpy.__version__); print(\"tqdm version:\", tqdm.__version__)"
 
 "${PYTHON_BIN}" train_t5.py \
-  --finetune \
   --experiment_name "${EXPERIMENT_NAME}" \
   --learning_rate "${LEARNING_RATE}" \
   --weight_decay "${WEIGHT_DECAY}" \
