@@ -4,7 +4,7 @@
 #SBATCH --partition=c12m85-a100-1
 #SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/out/%j_%x.out
 #SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/new_train/err/%j_%x.err
-#SBATCH --time=05:00:00
+#SBATCH --time=06:00:00
 #SBATCH --gres=gpu:1
 
 set -euo pipefail
