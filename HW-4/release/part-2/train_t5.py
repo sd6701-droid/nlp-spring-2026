@@ -96,7 +96,12 @@ def build_generation_config(args, model):
     )
 
 def clean_decoded_query(query):
-    return query.replace('\n', ' ').replace('\t', ' ').strip()
+    query = query.replace('\n', ' ').replace('\t', ' ').strip()
+    open_count = query.count('(')
+    close_count = query.count(')')
+    if open_count > close_count:
+        query = query + ')' * (open_count - close_count)
+    return query
 
 def generate_sql_queries(args, model, encoder_input, encoder_mask, initial_decoder_inputs, tokenizer):
     generation_config = build_generation_config(args, model)

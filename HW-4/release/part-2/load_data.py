@@ -1,4 +1,5 @@
 import os
+import re
 
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
@@ -9,10 +10,67 @@ import torch
 PAD_IDX = 0
 MODEL_NAME = "google-t5/t5-small"
 TASK_PREFIX = "translate English to SQL: "
+MAX_SQL_TOKENS = 400
+SCHEMA_HINT = (
+    "tables: flight(flight_id,airline_code,from_airport,to_airport,departure_time,"
+    "arrival_time,stops,round_trip_cost), airport_service(city_code,airport_code), "
+    "city(city_code,city_name), airline(airline_code,airline_name), "
+    "fare(fare_id,round_trip_cost), flight_fare(flight_id,fare_id), "
+    "flight_stop(flight_id,stop_airport), ground_service(city_code,airport_code,transport_type,ground_fare), "
+    "airport(airport_code,airport_name), days(day_name,day_id), date_day(day_number,month_number,year,day_name)"
+)
+
+CITY_MAP = {
+    "los angeles": "LOS ANGELES",
+    "la": "LOS ANGELES",
+    "new york": "NEW YORK",
+    "nyc": "NEW YORK",
+    "san francisco": "SAN FRANCISCO",
+    "sf": "SAN FRANCISCO",
+    "washington dc": "WASHINGTON",
+    "dc": "WASHINGTON",
+}
+
+AIRLINE_MAP = {
+    "american airlines": "AA",
+    "american": "AA",
+    "united airlines": "UA",
+    "united": "UA",
+    "us air": "US",
+    "delta": "DL",
+    "midwest express": "YX",
+}
+
+
+def has_phrase(text, phrase):
+    return re.search(rf"\b{re.escape(phrase)}\b", text) is not None
+
+
+def normalize_nl(nl_query):
+    query_lower = nl_query.lower()
+    hints = []
+
+    for city_name, canonical_name in CITY_MAP.items():
+        if has_phrase(query_lower, city_name):
+            hint = f"[city={canonical_name}]"
+            if hint not in hints:
+                hints.append(hint)
+
+    for airline_name, airline_code in AIRLINE_MAP.items():
+        if has_phrase(query_lower, airline_name):
+            hint = f"[airline={airline_code}]"
+            if hint not in hints:
+                hints.append(hint)
+
+    if not hints:
+        return nl_query
+
+    return f"{nl_query} {' '.join(hints)}"
 
 
 def build_encoder_input(nl_query):
-    return f"{TASK_PREFIX}{nl_query}"
+    normalized_nl = normalize_nl(nl_query)
+    return f"{TASK_PREFIX}{normalized_nl} | {SCHEMA_HINT}"
 
 class T5Dataset(Dataset):
 
@@ -58,17 +116,20 @@ class T5Dataset(Dataset):
             return examples
 
         for nl_query, sql_query in zip(nl_queries, sql_queries):
+            sql_ids = tokenizer(
+                sql_query,
+                add_special_tokens=True,
+                return_attention_mask=False,
+            )["input_ids"]
+            if split == "train" and len(sql_ids) > MAX_SQL_TOKENS:
+                continue
+
             encoder_ids = tokenizer(
                 build_encoder_input(nl_query),
                 add_special_tokens=True,
                 return_attention_mask=False,
             )["input_ids"]
-            decoder_target_ids = tokenizer(
-                sql_query,
-                add_special_tokens=True,
-                return_attention_mask=False,
-            )["input_ids"]
-            decoder_sequence = [self.decoder_start_token_id] + decoder_target_ids
+            decoder_sequence = [self.decoder_start_token_id] + sql_ids
 
             examples.append(
                 {
