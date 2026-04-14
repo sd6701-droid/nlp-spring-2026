@@ -44,7 +44,7 @@ def custom_transform(example):
 
     # You should update example["text"] using your transformation
 
-    REPLACE_PROB = 0.3
+    REPLACE_PROB = 0.4
 
     words = word_tokenize(example["text"])
     new_words = []
