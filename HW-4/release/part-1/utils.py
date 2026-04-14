@@ -44,8 +44,31 @@ def custom_transform(example):
 
     # You should update example["text"] using your transformation
 
-    raise NotImplementedError
+    REPLACE_PROB = 0.3
 
-    ##### YOUR CODE ENDS HERE ######
+    words = word_tokenize(example["text"])
+    new_words = []
+
+    for word in words:
+
+        if random.random() < REPLACE_PROB:
+            synonyms = []
+
+            for synset in wordnet.synsets(word):
+                for lemma in synset.lemmas():
+                    candidate = lemma.name().replace("_", " ")
+
+                    if candidate.lower() != word.lower() and " " not in candidate:
+                        synonyms.append(candidate)
+
+            if synonyms:
+
+                new_words.append(random.choice(synonyms))
+            else:
+                new_words.append(word)
+        else:
+            new_words.append(word)
+
+    example["text"] = TreebankWordDetokenizer().detokenize(new_words)
 
     return example
