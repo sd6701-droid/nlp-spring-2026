@@ -123,6 +123,13 @@ class T5Dataset(Dataset):
         self.decoder_start_token_id = self.tokenizer.convert_tokens_to_ids("<extra_id_0>")
         self.examples = self.process_data(data_folder, split, self.tokenizer)
 
+def normalize_sql(sql_query):
+    """Normalize SQL targets before training."""
+    sql_query = re.sub(r'\bAND\s+1\s*=\s*1\b', '', sql_query, flags=re.IGNORECASE)
+    sql_query = re.sub(r'\bWHERE\s+1\s*=\s*1\s+AND\b', 'WHERE', sql_query, flags=re.IGNORECASE)
+    sql_query = re.sub(r'\s+', ' ', sql_query).strip()
+    return sql_query
+
     def process_data(self, data_folder, split, tokenizer):
         nl_path = os.path.join(data_folder, f"{split}.nl")
         nl_queries = load_lines(nl_path)
@@ -149,6 +156,7 @@ class T5Dataset(Dataset):
             return examples
 
         for nl_query, sql_query in zip(nl_queries, sql_queries):
+            sql_query = normalize_sql(sql_query)  
             sql_ids = tokenizer(
                 sql_query,
                 add_special_tokens=True,

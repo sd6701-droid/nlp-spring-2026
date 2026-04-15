@@ -98,18 +98,28 @@ def build_generation_config(args, model):
     )
 
 def clean_decoded_query(query):
-    query = query.replace('\n', ' ').replace('\t', ' ').strip()
-    
-    # Fix unbalanced parentheses from truncation
-    open_count = query.count('(')
-    close_count = query.count(')')
+    query = query.replace("\n", " ").replace("\t", " ").strip()
+
+    # Remove AND 1=1 tautologies (ATIS dataset artifact)
+    query = re.sub(r'\bAND\s+1\s*=\s*1\b', '', query, flags=re.IGNORECASE)
+    query = re.sub(r'\bWHERE\s+1\s*=\s*1\s+AND\b', 'WHERE', query, flags=re.IGNORECASE)
+    query = re.sub(r'\bWHERE\s+1\s*=\s*1\b', '', query, flags=re.IGNORECASE)
+
+    # Fix number stuck to closing paren
+    query = re.sub(r"(\d)\)", r"\1 )", query)
+    # Fix string literal stuck to closing paren
+    query = re.sub(r"('[\w\s]+')\)", r"\1 )", query)
+    # Fix dangling commas before WHERE / closing paren
+    query = re.sub(r",\s*(WHERE\b)", r" \1", query)
+    query = re.sub(r",\s*\)", r" )", query)
+    # Fix double spaces
+    query = re.sub(r" {2,}", " ", query)
+    # Fix unbalanced parentheses
+    open_count = query.count("(")
+    close_count = query.count(")")
     if open_count > close_count:
-        query = query + ')' * (open_count - close_count)
-    
-    # Fix dangling commas before WHERE/FROM/closing paren
-    query = re.sub(r',\s*(WHERE\b)', r' \1', query)
-    query = re.sub(r',\s*(\))', r'\1', query)
-    
+        query = query + " )" * (open_count - close_count)
+
     return query
 
 def generate_sql_queries(args, model, encoder_input, encoder_mask, initial_decoder_inputs, tokenizer):
