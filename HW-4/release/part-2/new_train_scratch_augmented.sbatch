@@ -2,8 +2,8 @@
 #SBATCH --job-name=t5_scratch_aug
 #SBATCH --account=csci_ga_2590_001-2026sp
 #SBATCH --partition=c12m85-a100-1
-#SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/out/%j_%x.out
-#SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/err/%j_%x.err
+#SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train/out/%j_%x.out
+#SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train/err/%j_%x.err
 #SBATCH --time=08:00:00
 #SBATCH --gres=gpu:1
 
@@ -27,25 +27,26 @@ PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
 
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
+WARMUP_EPOCHS=3
 TEST_BATCH_SIZE=16
 
-LEARNING_RATE=3e-4
-WARMUP_EPOCHS=5
-EPOCHS=80
-PATIENCE=20
+LEARNING_RATE=3e-4       
+WARMUP_EPOCHS=5           # was 3
+EPOCHS=80                 # was 40 — scratch needs more
+PATIENCE=20               # was 10
 BATCH_SIZE=32
 
 NUM_BEAMS=10
 MAX_GEN_LEN=450
 MAX_GRAD_NORM=1.0
 RUN_ID=${SLURM_JOB_ID:-manual}
-MODEL_TAG=scr_aug
+MODEL_TAG=scr
 LR_TAG=${LEARNING_RATE//./p}
 WD_TAG=${WEIGHT_DECAY//./p}
 GRAD_TAG=${MAX_GRAD_NORM//./p}
 EXPERIMENT_NAME="experiment_ec_${MODEL_TAG}_ep${EPOCHS}_pat${PATIENCE}_lr${LR_TAG}_wd${WD_TAG}_bs${BATCH_SIZE}_tbs${TEST_BATCH_SIZE}_beam${NUM_BEAMS}_gen${MAX_GEN_LEN}_sched${SCHEDULER}_warm${WARMUP_EPOCHS}_grad${GRAD_TAG}_${RUN_ID}"
 
-RUN_DIR="runs/scr_aug_experiments/${EXPERIMENT_NAME}"
+RUN_DIR="runs/scr_experiments/${EXPERIMENT_NAME}"
 DEV_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_dev.sql"
 DEV_RECORDS_FILE="records/t5_scr_${EXPERIMENT_NAME}_dev.pkl"
 TEST_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_test.sql"
@@ -69,7 +70,6 @@ test_batch_size=${TEST_BATCH_SIZE}
 num_beams=${NUM_BEAMS}
 max_generation_length=${MAX_GEN_LEN}
 max_grad_norm=${MAX_GRAD_NORM}
-train_split=train_plus_augmented
 working_dir=$(pwd)
 start_time=$(date)
 EOF
