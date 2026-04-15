@@ -354,41 +354,45 @@ def build_generation_config(args, model):
         pad_token_id=model.config.pad_token_id,
     )
 
-
 def clean_decoded_query(query):
     query = query.replace("\n", " ").replace("\t", " ").strip()
 
-    # Fix missing spaces around comparison operators before numbers
+    # CRITICAL: Fix missing spaces around < > before numbers
+    # Model generates "< 800)" or "<800" — both cause syntax errors
     query = re.sub(r'([<>])\s*(\d)', r'\1 \2', query)
     
-    # Fix missing space between number and AND/OR
-    query = re.sub(r'(\d)(AND|OR|WHERE)', r'\1 \2', query, flags=re.IGNORECASE)
-    
     # Fix number stuck to closing paren: "800)" → "800 )"
-    query = re.sub(r"(\d)\)", r"\1 )", query)
-
+    query = re.sub(r'(\d)\)', r'\1 )', query)
+    
     # Fix string literal stuck to closing paren
     query = re.sub(r"('[\w\s]+')\)", r"\1 )", query)
 
-    # Remove AND 1=1 tautologies
+    # Fix "near flight_1" errors — missing comma between table aliases
+    # e.g. "city city_2 flight_1" → "city city_2 , flight_1"  
+    query = re.sub(
+        r'(\b\w+_\d+)\s+((?:flight|airport_service|city|airline|fare|days|date_day)\b)',
+        r'\1 , \2',
+        query
+    )
+
+    # Remove AND 1=1
     query = re.sub(r'\bAND\s+1\s*=\s*1\b', '', query, flags=re.IGNORECASE)
     query = re.sub(r'\bWHERE\s+1\s*=\s*1\s+AND\b', 'WHERE', query, flags=re.IGNORECASE)
 
-    # Fix dangling commas before WHERE / closing paren
-    query = re.sub(r",\s*(WHERE\b)", r" \1", query)
-    query = re.sub(r",\s*\)", r" )", query)
+    # Fix dangling commas
+    query = re.sub(r',\s*(WHERE\b)', r' \1', query)
+    query = re.sub(r',\s*\)', r' )', query)
 
     # Fix double spaces
-    query = re.sub(r" {2,}", " ", query)
+    query = re.sub(r' {2,}', ' ', query)
 
     # Fix unbalanced parentheses
-    open_count = query.count("(")
-    close_count = query.count(")")
+    open_count = query.count('(')
+    close_count = query.count(')')
     if open_count > close_count:
-        query = query + " )" * (open_count - close_count)
+        query = query + ' )' * (open_count - close_count)
 
     return query
-
 
 def generate_sql_queries(args, model, encoder_input, encoder_mask, initial_decoder_inputs, tokenizer):
     generation_config = build_generation_config(args, model)
@@ -452,7 +456,7 @@ def train_epoch(args, model, train_loader, optimizer, scheduler):
     model.train()
     total_loss = 0.0
     total_tokens = 0
-    criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
+    criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX, label_smoothing=0.1)
 
     for encoder_input, encoder_mask, decoder_input, decoder_targets, _ in tqdm(train_loader, desc="train", leave=False):
         optimizer.zero_grad(set_to_none=True)
