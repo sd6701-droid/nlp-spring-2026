@@ -15,7 +15,6 @@ singularity exec --cleanenv --nv \
   /bin/bash -lc '
 set -euo pipefail
 
-source /ext3/miniconda3/etc/profile.d/conda.sh
 export PATH=/ext3/envs/hw4_py311/bin:/ext3/miniconda3/bin:$PATH
 hash -r
 
