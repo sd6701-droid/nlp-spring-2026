@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=t5_scratch
+#SBATCH --job-name=t5_scratch_aug
 #SBATCH --account=csci_ga_2590_001-2026sp
 #SBATCH --partition=c12m85-a100-1
-#SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train/out/%j_%x.out
-#SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train/err/%j_%x.err
+#SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/out/%j_%x.out
+#SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/err/%j_%x.err
 #SBATCH --time=08:00:00
 #SBATCH --gres=gpu:1
 
@@ -15,14 +15,31 @@ singularity exec --cleanenv --nv \
   /bin/bash -lc '
 set -euo pipefail
 
-export PATH=/ext3/envs/nlp_env_311/bin:/ext3/miniconda3/bin:$PATH
+for CANDIDATE_BIN in \
+  /ext3/envs/nlp_env_311/bin \
+  /ext3/miniconda3/envs/nlp_env_311/bin \
+  /ext3/envs/hw4_py311/bin \
+  /ext3/miniconda3/envs/hw4_py311/bin \
+  /ext3/miniconda3/bin
+do
+  if [ -d "${CANDIDATE_BIN}" ]; then
+    export PATH="${CANDIDATE_BIN}:$PATH"
+  fi
+done
 hash -r
 
 cd /scratch/sd6701/nlp-spring-2026/HW-4/release/part-2
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
-PYTHON_BIN=/ext3/envs/nlp_env_311/bin/python
+if command -v python >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python)"
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="$(command -v python3)"
+else
+  echo "No python interpreter found in container PATH"
+  exit 1
+fi
 
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
@@ -39,13 +56,13 @@ NUM_BEAMS=10
 MAX_GEN_LEN=450
 MAX_GRAD_NORM=1.0
 RUN_ID=${SLURM_JOB_ID:-manual}
-MODEL_TAG=scr
+MODEL_TAG=scr_aug
 LR_TAG=${LEARNING_RATE//./p}
 WD_TAG=${WEIGHT_DECAY//./p}
 GRAD_TAG=${MAX_GRAD_NORM//./p}
 EXPERIMENT_NAME="experiment_ec_${MODEL_TAG}_ep${EPOCHS}_pat${PATIENCE}_lr${LR_TAG}_wd${WD_TAG}_bs${BATCH_SIZE}_tbs${TEST_BATCH_SIZE}_beam${NUM_BEAMS}_gen${MAX_GEN_LEN}_sched${SCHEDULER}_warm${WARMUP_EPOCHS}_grad${GRAD_TAG}_${RUN_ID}"
 
-RUN_DIR="runs/scr_experiments/${EXPERIMENT_NAME}"
+RUN_DIR="runs/scr_aug_experiments/${EXPERIMENT_NAME}"
 DEV_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_dev.sql"
 DEV_RECORDS_FILE="records/t5_scr_${EXPERIMENT_NAME}_dev.pkl"
 TEST_SQL_FILE="results/t5_scr_${EXPERIMENT_NAME}_test.sql"
@@ -87,7 +104,7 @@ echo "Extra-credit records output: ${SUBMIT_TEST_RECORDS_FILE}"
 
 "${PYTHON_BIN}" -c "import numpy, torch, tqdm, transformers; print(\"Torch version:\", torch.__version__); print(\"CUDA available:\", torch.cuda.is_available()); print(\"NumPy version:\", numpy.__version__); print(\"Transformers version:\", transformers.__version__); print(\"tqdm version:\", tqdm.__version__)"
 
-"${PYTHON_BIN}" train_t5_scratch.py \
+"${PYTHON_BIN}" train_t5_scratch_augmented.py \
   --experiment_name "${EXPERIMENT_NAME}" \
   --learning_rate "${LEARNING_RATE}" \
   --weight_decay "${WEIGHT_DECAY}" \
