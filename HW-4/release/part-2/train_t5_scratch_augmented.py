@@ -91,8 +91,10 @@ def main():
     model_type = "scr"
     gt_sql_path = "data/dev.sql"
     gt_record_path = "records/ground_truth_dev.pkl"
-    dev_sql_path = os.path.join("results", f"t5_{model_type}_{experiment_name}_dev.sql")
-    dev_record_path = os.path.join("records", f"t5_{model_type}_{experiment_name}_dev.pkl")
+    results_dir = os.path.join("results", experiment_name)
+    records_dir = os.path.join("records", experiment_name)
+    dev_sql_path = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_dev.sql")
+    dev_record_path = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_dev.pkl")
 
     dev_loss, dev_record_f1, dev_record_em, dev_sql_em, dev_error_rate = base.eval_epoch(
         args, model, dev_loader, gt_sql_path, dev_sql_path, gt_record_path, dev_record_path
@@ -103,8 +105,8 @@ def main():
     )
     print(f"Dev set results: {dev_error_rate*100:.2f}% of the generated outputs led to SQL errors")
 
-    test_sql_path = os.path.join("results", f"t5_{model_type}_{experiment_name}_test.sql")
-    test_record_path = os.path.join("records", f"t5_{model_type}_{experiment_name}_test.pkl")
+    test_sql_path = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_test.sql")
+    test_record_path = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_test.pkl")
     base.test_inference(args, model, test_loader, test_sql_path, test_record_path)
 
     if not args.skip_submission_copy:

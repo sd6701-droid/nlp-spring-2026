@@ -554,8 +554,10 @@ def train(args, model, train_loader, dev_loader, optimizer, scheduler):
     checkpoint_dir = os.path.join("checkpoints", f"{model_type}_experiments", experiment_name)
     gt_sql_path = "data/dev.sql"
     gt_record_path = "records/ground_truth_dev.pkl"
-    model_sql_path = os.path.join("results", f"t5_{model_type}_{experiment_name}_dev.sql")
-    model_record_path = os.path.join("records", f"t5_{model_type}_{experiment_name}_dev.pkl")
+    results_dir = os.path.join("results", experiment_name)
+    records_dir = os.path.join("records", experiment_name)
+    model_sql_path = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_dev.sql")
+    model_record_path = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_dev.pkl")
 
     best_f1 = -1.0
     best_state_dict = None
@@ -596,9 +598,11 @@ def train(args, model, train_loader, dev_loader, optimizer, scheduler):
 def copy_extra_credit_submission_files(args):
     experiment_name = args.experiment_name
     model_type = "scr"
+    results_dir = os.path.join("results", experiment_name)
+    records_dir = os.path.join("records", experiment_name)
 
-    source_test_sql = os.path.join("results", f"t5_{model_type}_{experiment_name}_test.sql")
-    source_test_records = os.path.join("records", f"t5_{model_type}_{experiment_name}_test.pkl")
+    source_test_sql = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_test.sql")
+    source_test_records = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_test.pkl")
     target_test_sql = os.path.join("results", "t5_ft_experiment_ec_test.sql")
     target_test_records = os.path.join("records", "t5_ft_experiment_ec_test.pkl")
     archived_test_sql = os.path.join("results", f"t5_ft_experiment_ec_{experiment_name}_test.sql")
@@ -664,8 +668,10 @@ def main():
     model_type = "scr"
     gt_sql_path = "data/dev.sql"
     gt_record_path = "records/ground_truth_dev.pkl"
-    dev_sql_path = os.path.join("results", f"t5_{model_type}_{experiment_name}_dev.sql")
-    dev_record_path = os.path.join("records", f"t5_{model_type}_{experiment_name}_dev.pkl")
+    results_dir = os.path.join("results", experiment_name)
+    records_dir = os.path.join("records", experiment_name)
+    dev_sql_path = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_dev.sql")
+    dev_record_path = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_dev.pkl")
 
     dev_loss, dev_record_f1, dev_record_em, dev_sql_em, dev_error_rate = eval_epoch(
         args, model, dev_loader, gt_sql_path, dev_sql_path, gt_record_path, dev_record_path
@@ -676,8 +682,8 @@ def main():
     )
     print(f"Dev set results: {dev_error_rate*100:.2f}% of the generated outputs led to SQL errors")
 
-    test_sql_path = os.path.join("results", f"t5_{model_type}_{experiment_name}_test.sql")
-    test_record_path = os.path.join("records", f"t5_{model_type}_{experiment_name}_test.pkl")
+    test_sql_path = os.path.join(results_dir, f"t5_{model_type}_{experiment_name}_test.sql")
+    test_record_path = os.path.join(records_dir, f"t5_{model_type}_{experiment_name}_test.pkl")
     test_inference(args, model, test_loader, test_sql_path, test_record_path)
 
     if not args.skip_submission_copy:
