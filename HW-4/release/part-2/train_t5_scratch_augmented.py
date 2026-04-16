@@ -114,6 +114,8 @@ def main():
         print("  records/t5_ft_experiment_ec_test.pkl")
         print(f"  results/t5_ft_experiment_ec_{experiment_name}_test.sql")
         print(f"  records/t5_ft_experiment_ec_{experiment_name}_test.pkl")
+        print(f"  results/{experiment_name}/t5_ft_experiment_ec_test.sql")
+        print(f"  results/{experiment_name}/t5_ft_experiment_ec_test.pkl")
 
     print("\nUsing augmented training data from:")
     print(f"  data/{AUGMENTED_TRAIN_PREFIX}.nl")

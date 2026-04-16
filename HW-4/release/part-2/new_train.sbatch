@@ -42,6 +42,7 @@ WD_TAG=${WEIGHT_DECAY//./p}
 EXPERIMENT_NAME="experiment_${MODEL_TAG}_ep${EPOCHS}_pat${PATIENCE}_lr${LR_TAG}_wd${WD_TAG}_bs${BATCH_SIZE}_tbs${TEST_BATCH_SIZE}_beam${NUM_BEAMS}_gen${MAX_GEN_LEN}_sched${SCHEDULER}_warm${WARMUP_EPOCHS}_${RUN_ID}"
 
 RUN_DIR="runs/ft_experiments/${EXPERIMENT_NAME}"
+RESULTS_PROCESS_DIR="results/${EXPERIMENT_NAME}"
 DEV_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_dev.sql"
 DEV_RECORDS_FILE="records/t5_ft_${EXPERIMENT_NAME}_dev.pkl"
 TEST_SQL_FILE="results/t5_ft_${EXPERIMENT_NAME}_test.sql"
@@ -50,9 +51,12 @@ SUBMIT_DEV_SQL_FILE="results/t5_ft_experiment_dev.sql"
 SUBMIT_DEV_RECORDS_FILE="records/t5_ft_experiment_dev.pkl"
 SUBMIT_TEST_SQL_FILE="results/t5_ft_experiment_test.sql"
 SUBMIT_TEST_RECORDS_FILE="records/t5_ft_experiment_test.pkl"
+PROCESS_TEST_SQL_FILE="${RESULTS_PROCESS_DIR}/t5_ft_experiment_test.sql"
+PROCESS_TEST_RECORDS_FILE="${RESULTS_PROCESS_DIR}/t5_ft_experiment_test.pkl"
 RUN_DETAILS_FILE="${RUN_DIR}/run_details.txt"
 
 mkdir -p "${RUN_DIR}"
+mkdir -p "${RESULTS_PROCESS_DIR}"
 cat > "${RUN_DETAILS_FILE}" <<EOF
 job_id=${RUN_ID}
 experiment_name=${EXPERIMENT_NAME}
@@ -79,6 +83,9 @@ echo "Dev SQL output: ${DEV_SQL_FILE}"
 echo "Dev records output: ${DEV_RECORDS_FILE}"
 echo "Test SQL output: ${TEST_SQL_FILE}"
 echo "Test records output: ${TEST_RECORDS_FILE}"
+echo "Process results dir: ${RESULTS_PROCESS_DIR}"
+echo "Process test SQL output: ${PROCESS_TEST_SQL_FILE}"
+echo "Process test records output: ${PROCESS_TEST_RECORDS_FILE}"
 
 "${PYTHON_BIN}" -c "import numpy, torch, tqdm; print(\"Torch version:\", torch.__version__); print(\"CUDA available:\", torch.cuda.is_available()); print(\"NumPy version:\", numpy.__version__); print(\"tqdm version:\", tqdm.__version__)"
 
@@ -106,6 +113,8 @@ cp "${DEV_SQL_FILE}" "${SUBMIT_DEV_SQL_FILE}"
 cp "${DEV_RECORDS_FILE}" "${SUBMIT_DEV_RECORDS_FILE}"
 cp "${TEST_SQL_FILE}" "${SUBMIT_TEST_SQL_FILE}"
 cp "${TEST_RECORDS_FILE}" "${SUBMIT_TEST_RECORDS_FILE}"
+cp "${TEST_SQL_FILE}" "${PROCESS_TEST_SQL_FILE}"
+cp "${TEST_RECORDS_FILE}" "${PROCESS_TEST_RECORDS_FILE}"
 
 {
   echo "end_time=$(date)"
@@ -113,5 +122,8 @@ cp "${TEST_RECORDS_FILE}" "${SUBMIT_TEST_RECORDS_FILE}"
   echo "canonical_dev_records=${SUBMIT_DEV_RECORDS_FILE}"
   echo "canonical_test_sql=${SUBMIT_TEST_SQL_FILE}"
   echo "canonical_test_records=${SUBMIT_TEST_RECORDS_FILE}"
+  echo "process_results_dir=${RESULTS_PROCESS_DIR}"
+  echo "process_test_sql=${PROCESS_TEST_SQL_FILE}"
+  echo "process_test_records=${PROCESS_TEST_RECORDS_FILE}"
 } >> "${RUN_DETAILS_FILE}"
 '

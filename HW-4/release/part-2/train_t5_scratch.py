@@ -603,9 +603,13 @@ def copy_extra_credit_submission_files(args):
     target_test_records = os.path.join("records", "t5_ft_experiment_ec_test.pkl")
     archived_test_sql = os.path.join("results", f"t5_ft_experiment_ec_{experiment_name}_test.sql")
     archived_test_records = os.path.join("records", f"t5_ft_experiment_ec_{experiment_name}_test.pkl")
+    process_output_dir = os.path.join("results", experiment_name)
+    process_test_sql = os.path.join(process_output_dir, "t5_ft_experiment_ec_test.sql")
+    process_test_records = os.path.join(process_output_dir, "t5_ft_experiment_ec_test.pkl")
 
     os.makedirs("results", exist_ok=True)
     os.makedirs("records", exist_ok=True)
+    os.makedirs(process_output_dir, exist_ok=True)
     with open(source_test_sql, "r") as src, open(target_test_sql, "w") as dst:
         dst.write(src.read())
     with open(source_test_records, "rb") as src, open(target_test_records, "wb") as dst:
@@ -613,6 +617,10 @@ def copy_extra_credit_submission_files(args):
     with open(source_test_sql, "r") as src, open(archived_test_sql, "w") as dst:
         dst.write(src.read())
     with open(source_test_records, "rb") as src, open(archived_test_records, "wb") as dst:
+        dst.write(src.read())
+    with open(source_test_sql, "r") as src, open(process_test_sql, "w") as dst:
+        dst.write(src.read())
+    with open(source_test_records, "rb") as src, open(process_test_records, "wb") as dst:
         dst.write(src.read())
 
 
@@ -679,6 +687,8 @@ def main():
         print("  records/t5_ft_experiment_ec_test.pkl")
         print(f"  results/t5_ft_experiment_ec_{experiment_name}_test.sql")
         print(f"  records/t5_ft_experiment_ec_{experiment_name}_test.pkl")
+        print(f"  results/{experiment_name}/t5_ft_experiment_ec_test.sql")
+        print(f"  results/{experiment_name}/t5_ft_experiment_ec_test.pkl")
 
     print("\nIf you see loss improving while F1 plateaus, try:")
     print("- Changing the learning rate.")
