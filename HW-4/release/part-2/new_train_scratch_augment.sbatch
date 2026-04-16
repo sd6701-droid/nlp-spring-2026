@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=t5_scratch_aug
+#SBATCH --job-name=t5_aug
 #SBATCH --account=csci_ga_2590_001-2026sp
 #SBATCH --partition=c12m85-a100-1
 #SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/out/%j_%x.out
