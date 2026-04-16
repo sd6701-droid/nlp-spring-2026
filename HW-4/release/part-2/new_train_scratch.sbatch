@@ -32,7 +32,7 @@ TEST_BATCH_SIZE=16
 
 LEARNING_RATE=3e-4       
 WARMUP_EPOCHS=5           # was 3
-EPOCHS=80                 # was 40 — scratch needs more
+EPOCHS=1                 # was 40 — scratch needs more
 PATIENCE=20               # was 10
 BATCH_SIZE=32
 
