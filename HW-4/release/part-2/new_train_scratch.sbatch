@@ -15,28 +15,34 @@ singularity exec --cleanenv --nv \
   /bin/bash -lc '
 set -euo pipefail
 
-source /ext3/miniconda3/etc/profile.d/conda.sh
-export PATH=/ext3/envs/hw4_py311/bin:/ext3/miniconda3/bin:$PATH
+export PATH=/scratch/sd6701/conda-envs/nlp_env_311/bin:/ext3/miniconda3/bin:$PATH
 hash -r
+PYTHON_BIN=/scratch/sd6701/conda-envs/nlp_env_311/bin/python
 
 cd /scratch/sd6701/nlp-spring-2026/HW-4/release/part-2
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
-PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
+PYTHON_BIN=/scratch/sd6701/conda-envs/nlp_env_311/bin/python
+if [ ! -x "${PYTHON_BIN}" ]; then
+  echo "Expected python not found: ${PYTHON_BIN}"
+  exit 1
+fi
+if ! "${PYTHON_BIN}" -c "import numpy, torch, tqdm, transformers" >/dev/null 2>&1; then
+  echo "Python exists but required packages are missing from: ${PYTHON_BIN}"
+  exit 1
+fi
+export PATH="$(dirname "${PYTHON_BIN}"):$PATH"
 
+EPOCHS=1
+PATIENCE=25
+LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
 WARMUP_EPOCHS=3
-TEST_BATCH_SIZE=16
-
-LEARNING_RATE=3e-4       
-WARMUP_EPOCHS=5           # was 3
-EPOCHS=1                 # was 40 — scratch needs more
-PATIENCE=20               # was 10
 BATCH_SIZE=32
-
-NUM_BEAMS=10
+TEST_BATCH_SIZE=16
+NUM_BEAMS=8
 MAX_GEN_LEN=450
 MAX_GRAD_NORM=1.0
 RUN_ID=${SLURM_JOB_ID:-manual}
