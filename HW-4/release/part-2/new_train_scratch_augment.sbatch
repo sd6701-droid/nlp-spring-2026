@@ -15,15 +15,44 @@ singularity exec --cleanenv --nv \
   /bin/bash -lc '
 set -euo pipefail
 
-source /ext3/miniconda3/etc/profile.d/conda.sh
-export PATH=/ext3/envs/hw4_py311/bin:/ext3/miniconda3/bin:$PATH
+export PATH=/ext3/miniconda3/bin:$PATH
 hash -r
 
 cd /scratch/sd6701/nlp-spring-2026/HW-4/release/part-2
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
-PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
+PYTHON_BIN=""
+for CANDIDATE_PYTHON in \
+  /ext3/envs/nlp_env_311/bin/python \
+  /ext3/miniconda3/envs/nlp_env_311/bin/python \
+  /ext3/miniconda3/bin/python
+do
+  if [ -x "${CANDIDATE_PYTHON}" ] && \
+     "${CANDIDATE_PYTHON}" -c "import numpy, torch, tqdm, transformers" >/dev/null 2>&1; then
+    PYTHON_BIN="${CANDIDATE_PYTHON}"
+    break
+  fi
+done
+
+if [ -z "${PYTHON_BIN}" ]; then
+  echo "Could not find a Python with numpy/torch/tqdm/transformers installed."
+  echo "Checked candidates:"
+  for CANDIDATE_PYTHON in \
+    /ext3/envs/nlp_env_311/bin/python \
+    /ext3/miniconda3/envs/nlp_env_311/bin/python \
+    /ext3/miniconda3/bin/python
+  do
+    if [ -x "${CANDIDATE_PYTHON}" ]; then
+      echo "  found executable: ${CANDIDATE_PYTHON}"
+    else
+      echo "  missing: ${CANDIDATE_PYTHON}"
+    fi
+  done
+  exit 1
+fi
+
+export PATH="$(dirname "${PYTHON_BIN}"):$PATH"
 
 EPOCHS=40
 PATIENCE=10
