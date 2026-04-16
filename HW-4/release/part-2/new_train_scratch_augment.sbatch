@@ -15,44 +15,25 @@ singularity exec --cleanenv --nv \
   /bin/bash -lc '
 set -euo pipefail
 
-for CANDIDATE_BIN in \
-  /ext3/envs/nlp_env_311/bin \
-  /ext3/miniconda3/envs/nlp_env_311/bin \
-  /ext3/envs/hw4_py311/bin \
-  /ext3/miniconda3/envs/hw4_py311/bin \
-  /ext3/miniconda3/bin
-do
-  if [ -d "${CANDIDATE_BIN}" ]; then
-    export PATH="${CANDIDATE_BIN}:$PATH"
-  fi
-done
+source /ext3/miniconda3/etc/profile.d/conda.sh
+export PATH=/ext3/envs/hw4_py311/bin:/ext3/miniconda3/bin:$PATH
 hash -r
 
 cd /scratch/sd6701/nlp-spring-2026/HW-4/release/part-2
 
 export PYTHONNOUSERSITE=1
 export TOKENIZERS_PARALLELISM=false
-if command -v python >/dev/null 2>&1; then
-  PYTHON_BIN="$(command -v python)"
-elif command -v python3 >/dev/null 2>&1; then
-  PYTHON_BIN="$(command -v python3)"
-else
-  echo "No python interpreter found in container PATH"
-  exit 1
-fi
+PYTHON_BIN=/ext3/envs/hw4_py311/bin/python
 
+EPOCHS=40
+PATIENCE=10
+LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
 WARMUP_EPOCHS=3
-TEST_BATCH_SIZE=16
-
-LEARNING_RATE=3e-4       
-WARMUP_EPOCHS=5           # was 3
-EPOCHS=80                 # was 40 — scratch needs more
-PATIENCE=20               # was 10
 BATCH_SIZE=32
-
-NUM_BEAMS=10
+TEST_BATCH_SIZE=16
+NUM_BEAMS=8
 MAX_GEN_LEN=450
 MAX_GRAD_NORM=1.0
 RUN_ID=${SLURM_JOB_ID:-manual}
@@ -86,6 +67,7 @@ test_batch_size=${TEST_BATCH_SIZE}
 num_beams=${NUM_BEAMS}
 max_generation_length=${MAX_GEN_LEN}
 max_grad_norm=${MAX_GRAD_NORM}
+train_split=train_plus_augmented
 working_dir=$(pwd)
 start_time=$(date)
 EOF
