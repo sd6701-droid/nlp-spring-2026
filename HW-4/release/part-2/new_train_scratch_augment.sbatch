@@ -34,8 +34,8 @@ if ! "${PYTHON_BIN}" -c "import numpy, torch, tqdm, transformers" >/dev/null 2>&
 fi
 export PATH="$(dirname "${PYTHON_BIN}"):$PATH"
 
-EPOCHS=40
-PATIENCE=10
+EPOCHS=80
+PATIENCE=25
 LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
