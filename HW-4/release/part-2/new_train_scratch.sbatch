@@ -34,7 +34,7 @@ if ! "${PYTHON_BIN}" -c "import numpy, torch, tqdm, transformers" >/dev/null 2>&
 fi
 export PATH="$(dirname "${PYTHON_BIN}"):$PATH"
 
-EPOCHS=1
+EPOCHS=100
 PATIENCE=25
 LEARNING_RATE=1e-4
 WEIGHT_DECAY=0.01
@@ -42,7 +42,7 @@ SCHEDULER=cosine
 WARMUP_EPOCHS=3
 BATCH_SIZE=32
 TEST_BATCH_SIZE=16
-NUM_BEAMS=8
+NUM_BEAMS=10
 MAX_GEN_LEN=450
 MAX_GRAD_NORM=1.0
 RUN_ID=${SLURM_JOB_ID:-manual}
