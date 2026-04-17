@@ -4,7 +4,7 @@
 #SBATCH --partition=c12m85-a100-1
 #SBATCH --output=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/out/%j_%x.out
 #SBATCH --error=/scratch/sd6701/nlp-spring-2026/HW-4/release/part-2/logs/scratch_train_augmented/err/%j_%x.err
-#SBATCH --time=08:00:00
+#SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
 
 set -euo pipefail
@@ -34,9 +34,9 @@ if ! "${PYTHON_BIN}" -c "import numpy, torch, tqdm, transformers" >/dev/null 2>&
 fi
 export PATH="$(dirname "${PYTHON_BIN}"):$PATH"
 
-EPOCHS=80
-PATIENCE=25
-LEARNING_RATE=1e-4
+EPOCHS=50
+PATIENCE=1000
+LEARNING_RATE=3e-4
 WEIGHT_DECAY=0.01
 SCHEDULER=cosine
 WARMUP_EPOCHS=3
